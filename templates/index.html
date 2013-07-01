@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>    
+    <head>
+        <title>Armakom Mobil Odeme</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+        <link rel="stylesheet" href="/static/style/main.css" />
+    </head>
+    
+    <body>
+        <div id="wrapper">            
+            <br />
+            <h2>QR Fatura (Demo)</h2>               
+            <hr />              
+                        
+            <div id='form' style="margin:50px">              
+                <table>
+                    <tr>
+                        <td>
+                            <label>Sirket Adi :</label>
+                        </td>
+                        <td>
+                            <input id="company" type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Urun Adi :</label>
+                        </td>
+                        <td>
+                            <input id="product" type="text" />
+                        </td>
+                    </tr> 
+                    <tr>
+                    <tr>                      
+                        <td>
+                           <label>Odenecek Tutar:</label>
+                        </td>
+                        <td>
+                            <input id="amount" type='text'/>
+                            <label> TL</label>            
+                        </td>
+                    </tr>
+                        <td></td>
+                        <td>
+                            <button id="qrCodeGenertor" >QR-Fatura Olustur</button>
+                        </td>
+                    </tr>                   
+                </table>               
+                <br />               
+            </div>
+            
+            <div id="qrReceipt">
+                <table>
+                    <tr>
+                        <td>
+                            <div id="details" style="height:400px;">
+                            </div>                            
+                        </td>
+                        <td>
+                           <div id="qrCode" style="width:400px;">...</div> 
+                        </td>
+                    </tr>
+                </table>               
+            </div>
+            
+            <div id="result"></div>
+            
+            <br /><br />
+            <hr />
+            <br />
+            <div id="footer">Kopirayt</div>            
+        </div>       
+        
+        <script>
+            var _repeatPollInMiliseconds = 3000;
+            var _totalPollsBeforeFail = 20;
+            $("#qrReceipt").hide();
+            
+            function startPolling(){
+                $('#qrCode').data('retryCount',0);
+                $("#result").html("<p style='color:yellow'>Onay Bekleniyor</p>");
+                $('#qrCode').data('timerId', setInterval(
+                    function poll(){
+                        $.ajax({
+                            type: "GET",
+                            url: "/qrpayment/PaymentStatus?token="+$("#qrCode").data("token"),
+                            success: function(response){
+                                $('#qrCode').data('retryCount',
+                                     $('#qrCode').data('retryCount')+1);
+                                result = JSON.parse(response);
+                                if (result.isComplete){
+                                    $("#result").html("<p style='color:green'>Odeme Onaylandi</p>");
+                                    clearInterval($('#qrCode').data('timerId'));
+                                } else if ($('#qrCode').data('retryCount')>_totalPollsBeforeFail){
+                                    $("#result").html("<p style='color:red'>Islem Gerceklestirilemedi</p>");
+                                    clearInterval($('#qrCode').data('timerId'));
+                                }                            
+                            }
+                        });                    
+                    },_repeatPollInMiliseconds));
+            }
+            
+            $("#qrCodeGenertor").click(function(){
+                $('#form').hide();
+                $('#qrReceipt').show();
+                $("#details").html(
+                    "<br /><br />"
+                    +"<h3>Mobil Odeme Icin Yandaki QR Kodunuzu Cep Telefonu Uygulamaniza Okutun --></h3>"
+                    +"<h3>Fatura Detaylari</h3>"
+                    +"<hr />"
+                    +"<h4>"+$("#company").val()+"</h4>"
+                    +"<b>Urun :</b> "+$("#product").val()+"<br />"
+                    +"<b>Toplam Fiyat:</b> "+$("#amount").val()+"<br />"
+                    +"<b></b>");
+                
+                $('#qrCode').html('<img src="/static/img/loading.gif" />');
+                $.ajax({
+                    type: "POST",
+                    url: "/qrpayment/CreatePayment",
+                    data: JSON.stringify({
+                        company : $("#company").val(),
+                        //product : $("#product").val(),
+                        amount : $("#amount").val()    
+                    }),
+                    success: function(result){
+                        $('#qrCode').html("");
+                        $("#qrCode").data("token",JSON.parse(result).token);
+                        $("#qrCode").prepend(
+                            '<img src="https://chart.googleapis.com/chart?chs=400x400&chd=t:60,40&cht=qr&chl=http://armqrpayment.appspot.com/qrpayment/FetchPayment?token='+
+                            JSON.parse(result).token
+                            +'" />');
+                        startPolling();                       
+                    }
+                });                    
+            });           
+        </script>       
+    </body>    
+</html>
+    
+    

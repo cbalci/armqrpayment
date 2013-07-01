@@ -1,0 +1,44 @@
+body {
+    font-family: arial;
+    color: #202020;
+    text-shadow: 1px 1px 1px #888;
+}
+
+#wrapper {
+    width : 1000px;
+    margin-left : auto;
+    margin-right : auto;
+    border-radius : 5px;
+    border: 1px;
+    border-style : solid;
+    border-color : gray;
+    box-shadow: 5px 5px 3px #888;
+    padding:20px;
+}
+
+#form {
+    
+}
+
+#details {
+    width : 500px;
+    padding:0px;
+}
+
+#qrCode {
+    padding-left:10px;
+}
+
+#result{
+    text-align:center;
+    width:300px;
+    margin-right:auto;
+    margin-left:auto;
+    
+}
+
+#footer {
+    margin-left:auto;
+    margin-right:auto;
+    
+}
